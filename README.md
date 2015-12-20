@@ -1,102 +1,122 @@
 RoundedImageView
 ================
 
-A fast ImageView (and Drawable) that supports rounded corners based on the original [example from Romain Guy](http://www.curious-creature.org/2012/12/11/android-recipe-1-image-with-rounded-corners/)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.makeramen/roundedimageview/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.makeramen/roundedimageview)
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-RoundedImageView-brightgreen.svg?style=flat)](https://android-arsenal.com/details/1/680)
+
+A fast ImageView (and Drawable) that supports rounded corners (and ovals or circles) based on the original [example from Romain Guy](http://www.curious-creature.org/2012/12/11/android-recipe-1-image-with-rounded-corners/). RoundedImageView is a full superset of [CircleImageView](https://github.com/hdodenhof/CircleImageView) (which is actually just a subset based on this lib) with many more advanced features like support for ovals, rounded rectangles, ScaleTypes and TileModes.
 
 ![RoundedImageView screenshot](https://raw.github.com/makeramen/RoundedImageView/master/screenshot.png)
+![RoundedImageView screenshot with ovals](https://raw.github.com/makeramen/RoundedImageView/master/screenshot-oval.png)
 
 There are many ways to create rounded corners in android, but this is the fastest and best one that I know of because it:
 * does **not** create a copy of the original bitmap
 * does **not** use a clipPath which is not hardware accelerated and not anti-aliased.
 * does **not** use setXfermode to clip the bitmap and draw twice to the canvas.
 
-If you know of a better method, let me know and I'll implement it!
+If you know of a better method, let me know (or even better open a pull request)!
 
 Also has proper support for:
 * Borders (with Colors and ColorStateLists)
+* Ovals and Circles
 * All `ScaleType`s
-  * Borders are drawn at view edge, not bitmap edge.
+  * Borders are drawn at view edge, not bitmap edge
   * Except on edges where the bitmap is smaller than the view
   * Borders are **not** scaled up/down with the image (correct width and radius are maintained)
 * Anti-aliasing
 * Transparent backgrounds
 * Hardware acceleration
-* Support for TransitionDrawables (XML attrs only)
+* Support for LayerDrawables (including TransitionDrawables)
+* TileModes for repeating drawables
 
 
 Gradle
 ----
-RoundedImageView is available on [Ark](https://github.com/ark/ark).
+RoundedImageView is available in [Maven Central](http://search.maven.org/#search%7Cgav%7C1%7Cg%3A%22com.makeramen%22%20AND%20a%3A%22roundedimageview%22).
 
 Add the following to your `build.gradle` to use:
 ```
 repositories {
-    maven {
-        url 'https://raw.github.com/ark/ark/master/releases/'
-    }
+    mavenCentral()
 }
 
 dependencies {
-    compile 'com.makeramen:roundedimageview:1.0.0'
+    compile 'com.makeramen:roundedimageview:2.2.1'
 }
 ```
 
-Maven
-----
 
-Make sure you installed Android 4.2 from the [Android Maven Deployer](https://github.com/mosabua/maven-android-sdk-deployer)
-
-Build the apk:
-```
-git clone https://github.com/vinc3m1/RoundedImageView.git
-cd ./RoundedImageView/
-mvn clean install
-```
-Install and run:
-````
-cd ./example
-mvn android:deploy android:run
-````
-If you want to use the library, add this dependency:
-```
-<dependency>
-    <groupId>com.makeramen.rounded</groupId>
-    <artifactId>library</artifactId>
-    <version>0.1</version>
-    <type>apklib</type>
-</dependency>
-```
-
-Use Library
+Usage
 ----
 Define in xml:
 
 ```xml
-<com.makeramen.RoundedImageView
-        xmlns:makeramen="http://schemas.android.com/apk/res/com.makeramen.rounded.RoundedImageView"
+<com.makeramen.roundedimageview.RoundedImageView
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/imageView1"
         android:src="@drawable/photo1"
-        android:scaleType="centerCrop"
-        makeramen:corner_radius="30dip"
-        makeramen:border="2dip"
-        makeramen:border_color="#333333"
-        makeramen:round_background="true" />
+        android:scaleType="fitCenter"
+        app:riv_corner_radius="30dip"
+        app:riv_border_width="2dip"
+        app:riv_border_color="#333333"
+        app:riv_mutate_background="true"
+        app:riv_tile_mode="repeat"
+        app:riv_oval="true" />
 ```
 
 Or in code:
 
 ```java
-RoundedImageView iv = new RoundedImageView(context);
-iv.setScaleType(ScaleType.CENTER_CROP);
-iv.setCornerRadius(10);
-iv.setBorderWidth(2);
-iv.setBorderColor(Color.DKGRAY);
-iv.setRoundedBackground(true);
-iv.setImageDrawable(drawable);
-iv.setBackground(backgroundDrawable);
+RoundedImageView riv = new RoundedImageView(context);
+riv.setScaleType(ScaleType.CENTER_CROP);
+riv.setCornerRadius((float) 10);
+riv.setBorderWidth((float) 2);
+riv.setBorderColor(Color.DKGRAY);
+riv.mutateBackground(true);
+riv.setImageDrawable(drawable);
+riv.setBackground(backgroundDrawable);
+riv.setOval(true);
+riv.setTileModeX(Shader.TileMode.REPEAT);
+riv.setTileModeY(Shader.TileMode.REPEAT);
 ```
 
-Known Issues
---------------------------------------
-* Programmatically setting attributes with TransitionDrawables not yet supported.
-* Only tested support for BitmapDrawables and TransitionDrawables (with BitmapDrawables in them). Other types might work but may have unexpected behavior.
+Or make a Transformation for Picasso:
+
+```java
+Transformation transformation = new RoundedTransformationBuilder()
+          .borderColor(Color.BLACK)
+          .borderWidthDp(3)
+          .cornerRadiusDp(30)
+          .oval(false)
+          .build();
+
+Picasso.with(context)
+    .load(url)
+    .fit()
+    .transform(transformation)
+    .into(imageView);
+```
+
+Changelog
+----------
+see [Releases](https://github.com/vinc3m1/RoundedImageView/releases)
+
+
+
+
+License
+-------
+
+    Copyright 2015 Vincent Mi
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.

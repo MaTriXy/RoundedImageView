@@ -1,24 +1,35 @@
-apply plugin: 'android'
+apply plugin: 'com.android.application'
+
+repositories {
+  mavenCentral()
+  // maven {
+  //     url 'https://oss.sonatype.org/content/repositories/snapshots/'
+  //     url 'https://oss.sonatype.org/content/repositories/releases/'
+  // }
+}
 
 dependencies {
-    compile project(':roundedimageview')
+  //compile 'com.makeramen:roundedimageview:2.0.0-SNAPSHOT'
+  compile project(':roundedimageview')
+  compile 'com.squareup.picasso:picasso:2.5.2'
+  compile 'com.android.support:support-v4:23.1.0'
+  compile 'com.android.support:appcompat-v7:23.1.0'
 }
 
 android {
-    sourceSets {
-        main {
-            manifest.srcFile 'AndroidManifest.xml'
-            java.srcDirs = ['src']
-            resources.srcDirs = ['src']
-            aild.srcDirs = ['src']
-            renderscript.srcDirs = ['src']
-            res.srcDirs = ['res']
-            assets.srcDirs = ['assets']
-        }
+  compileSdkVersion rootProject.ext.compileSdkVersion
+  buildToolsVersion rootProject.ext.buildToolsVersion
 
-        instrumentTest.setRoot('tests')
-    }
+  defaultConfig {
+    applicationId "com.makeramen.roundedimageview.example"
+    minSdkVersion 14
+    targetSdkVersion 23
+    versionCode 1
+    versionName version
+  }
 
-    compileSdkVersion 17
-    buildToolsVersion '17.0.0'
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_7
+    targetCompatibility JavaVersion.VERSION_1_7
+  }
 }
