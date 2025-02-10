@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2015 Vincent Mi
+* Copyright (C) 2017 Vincent Mi
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.ColorFilter;
 import android.graphics.Shader;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
@@ -71,7 +72,8 @@ public class RoundedImageView extends ImageView {
   private boolean mIsOval = false;
   private boolean mMutateBackground = false;
   private int mResource;
-  private ScaleType mScaleType = ScaleType.FIT_CENTER;
+  private int mBackgroundResource;
+  private ScaleType mScaleType;
   private Shader.TileMode mTileModeX = DEFAULT_TILE_MODE;
   private Shader.TileMode mTileModeY = DEFAULT_TILE_MODE;
 
@@ -159,6 +161,11 @@ public class RoundedImageView extends ImageView {
 
     updateDrawableAttrs();
     updateBackgroundDrawableAttrs(true);
+
+    if (mMutateBackground) {
+      //noinspection deprecation
+      super.setBackgroundDrawable(mBackgroundDrawable);
+    }
 
     a.recycle();
   }
@@ -269,8 +276,41 @@ public class RoundedImageView extends ImageView {
     setBackgroundDrawable(background);
   }
 
+  @Override
+  public void setBackgroundResource(@DrawableRes int resId) {
+    if (mBackgroundResource != resId) {
+      mBackgroundResource = resId;
+      mBackgroundDrawable = resolveBackgroundResource();
+      setBackgroundDrawable(mBackgroundDrawable);
+    }
+  }
+
+  @Override
+  public void setBackgroundColor(int color) {
+    mBackgroundDrawable = new ColorDrawable(color);
+    setBackgroundDrawable(mBackgroundDrawable);
+  }
+
+  private Drawable resolveBackgroundResource() {
+    Resources rsrc = getResources();
+    if (rsrc == null) { return null; }
+
+    Drawable d = null;
+
+    if (mBackgroundResource != 0) {
+      try {
+        d = rsrc.getDrawable(mBackgroundResource);
+      } catch (Exception e) {
+        Log.w(TAG, "Unable to find resource: " + mBackgroundResource, e);
+        // Don't try again.
+        mBackgroundResource = 0;
+      }
+    }
+    return RoundedDrawable.fromDrawable(d);
+  }
+
   private void updateDrawableAttrs() {
-    updateAttrs(mDrawable);
+    updateAttrs(mDrawable, mScaleType);
   }
 
   private void updateBackgroundDrawableAttrs(boolean convert) {
@@ -278,7 +318,7 @@ public class RoundedImageView extends ImageView {
       if (convert) {
         mBackgroundDrawable = RoundedDrawable.fromDrawable(mBackgroundDrawable);
       }
-      updateAttrs(mBackgroundDrawable);
+      updateAttrs(mBackgroundDrawable, ScaleType.FIT_XY);
     }
   }
 
@@ -307,17 +347,17 @@ public class RoundedImageView extends ImageView {
     }
   }
 
-  private void updateAttrs(Drawable drawable) {
+  private void updateAttrs(Drawable drawable, ScaleType scaleType) {
     if (drawable == null) { return; }
 
     if (drawable instanceof RoundedDrawable) {
       ((RoundedDrawable) drawable)
-          .setScaleType(mScaleType)
-          .setBorderWidth(mBorderWidth)
-          .setBorderColor(mBorderColor)
-          .setOval(mIsOval)
-          .setTileModeX(mTileModeX)
-          .setTileModeY(mTileModeY);
+              .setScaleType(scaleType)
+              .setBorderWidth(mBorderWidth)
+              .setBorderColor(mBorderColor)
+              .setOval(mIsOval)
+              .setTileModeX(mTileModeX)
+              .setTileModeY(mTileModeY);
 
       if (mCornerRadii != null) {
         ((RoundedDrawable) drawable).setCornerRadius(
@@ -332,7 +372,7 @@ public class RoundedImageView extends ImageView {
       // loop through layers to and set drawable attrs
       LayerDrawable ld = ((LayerDrawable) drawable);
       for (int i = 0, layers = ld.getNumberOfLayers(); i < layers; i++) {
-        updateAttrs(ld.getDrawable(i));
+        updateAttrs(ld.getDrawable(i), scaleType);
       }
     }
   }
@@ -342,6 +382,7 @@ public class RoundedImageView extends ImageView {
   public void setBackgroundDrawable(Drawable background) {
     mBackgroundDrawable = background;
     updateBackgroundDrawableAttrs(true);
+    //noinspection deprecation
     super.setBackgroundDrawable(mBackgroundDrawable);
   }
 
@@ -488,10 +529,22 @@ public class RoundedImageView extends ImageView {
     }
   }
 
+  /**
+   * Return true if this view should be oval and always set corner radii to half the height or
+   * width.
+   *
+   * @return if this {@link RoundedImageView} is set to oval.
+   */
   public boolean isOval() {
     return mIsOval;
   }
 
+  /**
+   * Set if the drawable should ignore the corner radii set and always round the source to
+   * exactly half the height or width.
+   *
+   * @param oval if this {@link RoundedImageView} should be oval.
+   */
   public void setOval(boolean oval) {
     mIsOval = oval;
     updateDrawableAttrs();
@@ -525,10 +578,22 @@ public class RoundedImageView extends ImageView {
     invalidate();
   }
 
+  /**
+   * If {@code true}, we will also round the background drawable according to the settings on this
+   * ImageView.
+   *
+   * @return whether the background is mutated.
+   */
   public boolean mutatesBackground() {
     return mMutateBackground;
   }
 
+  /**
+   * Set whether the {@link RoundedImageView} should round the background drawable according to
+   * the settings in addition to the source drawable.
+   *
+   * @param mutate true if this view should mutate the background drawable.
+   */
   public void mutateBackground(boolean mutate) {
     if (mMutateBackground == mutate) { return; }
 

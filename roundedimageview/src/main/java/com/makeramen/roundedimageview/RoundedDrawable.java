@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2015 Vincent Mi
+* Copyright (C) 2017 Vincent Mi
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import android.util.Log;
 import android.widget.ImageView.ScaleType;
 import java.util.HashSet;
 import java.util.Set;
+import java.lang.Throwable;
 
 @SuppressWarnings("UnusedDeclaration")
 public class RoundedDrawable extends Drawable {
@@ -61,8 +62,8 @@ public class RoundedDrawable extends Drawable {
   private Shader.TileMode mTileModeY = Shader.TileMode.CLAMP;
   private boolean mRebuildShader = true;
 
-  // [ topLeft, topRight, bottomLeft, bottomRight ]
   private float mCornerRadius = 0f;
+  // [ topLeft, topRight, bottomLeft, bottomRight ]
   private final boolean[] mCornersRounded = new boolean[] { true, true, true, true };
 
   private boolean mOval = false;
@@ -102,7 +103,9 @@ public class RoundedDrawable extends Drawable {
         // just return if it's already a RoundedDrawable
         return drawable;
       } else if (drawable instanceof LayerDrawable) {
-        LayerDrawable ld = (LayerDrawable) drawable;
+        ConstantState cs = drawable.mutate().getConstantState();
+        LayerDrawable ld = (LayerDrawable) (cs != null ? cs.newDrawable() : drawable);
+
         int num = ld.getNumberOfLayers();
 
         // loop through layers to and change to RoundedDrawables if possible
@@ -135,7 +138,7 @@ public class RoundedDrawable extends Drawable {
       Canvas canvas = new Canvas(bitmap);
       drawable.setBounds(0, 0, canvas.getWidth(), canvas.getHeight());
       drawable.draw(canvas);
-    } catch (Exception e) {
+    } catch (Throwable e) {
       e.printStackTrace();
       Log.w(TAG, "Failed to create bitmap from drawable!");
       bitmap = null;
@@ -257,6 +260,7 @@ public class RoundedDrawable extends Drawable {
     }
 
     mDrawableRect.set(mBorderRect);
+    mRebuildShader = true;
   }
 
   @Override
